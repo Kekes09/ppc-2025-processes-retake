@@ -13,7 +13,6 @@ namespace luchnikov_e_graham_cov_hall_constr {
 namespace {
 constexpr double kPi = 3.14159265358979323846;
 constexpr double kEpsilon = 1e-10;
-constexpr std::size_t kPointDataSize = 3;
 struct Point {
   double x;
   double y;
@@ -29,30 +28,33 @@ double DistanceSquared(const Point &a, const Point &b) {
   double dy = a.y - b.y;
   return dx * dx + dy * dy;
 }
-void PackPoints(const std::vector<Point> &points, std::vector<double> &buffer) {
-  buffer.resize(points.size() * kPointDataSize);
-  for (std::size_t i = 0; i < points.size(); ++i) {
-    buffer[i * kPointDataSize] = points[i].x;
-    buffer[i * kPointDataSize + 1] = points[i].y;
-    buffer[i * kPointDataSize + 2] = static_cast<double>(points[i].index);
-  }
+}  // namespace
+LuschnikovEGrahamCovHallConstrSEQ::LuschnikovEGrahamCovHallConstrSEQ(const InType &in) {
+  SetTypeOfTask(GetStaticTypeOfTask());
+  GetInput() = in;
+  GetOutput() = 0;
 }
-std::vector<Point> UnpackPoints(const std::vector<double> &buffer) {
+bool LuschnikovEGrahamCovHallConstrSEQ::ValidationImpl() {
+  return (GetInput() > 0) && (GetOutput() == 0);
+}
+bool LuschnikovEGrahamCovHallConstrSEQ::PreProcessingImpl() {
+  GetOutput() = 0;
+  return true;
+}
+bool LuschnikovEGrahamCovHallConstrSEQ::RunImpl() {
+  auto input = GetInput();
+  if (input <= 0) {
+    return false;
+  }
   std::vector<Point> points;
-  std::size_t count = buffer.size() / kPointDataSize;
-  points.reserve(count);
-  for (std::size_t i = 0; i < count; ++i) {
-    Point p;
-    p.x = buffer[i * kPointDataSize];
-    p.y = buffer[i * kPointDataSize + 1];
-    p.index = static_cast<int>(buffer[i * kPointDataSize + 2]);
-    points.push_back(p);
+  points.reserve(static_cast<std::size_t>(input));
+  for (InType i = 0; i < input; ++i) {
+    double angle = (2.0 * kPi * static_cast<double>(i)) / static_cast<double>(input);
+    points.emplace_back(std::cos(angle), std::sin(angle), static_cast<int>(i));
   }
-  return points;
-}
-std::size_t BuildConvexHull(std::vector<Point> &points) {
   if (points.size() < 3) {
-    return points.size();
+    GetOutput() = static_cast<OutType>(points.size());
+    return true;
   }
   auto bottom_left = std::min_element(points.begin(), points.end(), [](const Point &p1, const Point &p2) {
     if (p1.y != p2.y) {
@@ -82,33 +84,7 @@ std::size_t BuildConvexHull(std::vector<Point> &points) {
     hull_stack.push(top);
     hull_stack.push(points[i]);
   }
-  return hull_stack.size();
-}
-}  // namespace
-LuschnikovEGrahamCovHallConstrSEQ::LuschnikovEGrahamCovHallConstrSEQ(const InType &in) {
-  SetTypeOfTask(GetStaticTypeOfTask());
-  GetInput() = in;
-  GetOutput() = 0;
-}
-bool LuschnikovEGrahamCovHallConstrSEQ::ValidationImpl() {
-  return (GetInput() > 0) && (GetOutput() == 0);
-}
-bool LuschnikovEGrahamCovHallConstrSEQ::PreProcessingImpl() {
-  GetOutput() = 0;
-  return true;
-}
-bool LuschnikovEGrahamCovHallConstrSEQ::RunImpl() {
-  auto input = GetInput();
-  if (input <= 0) {
-    return false;
-  }
-  std::vector<Point> points;
-  points.reserve(static_cast<std::size_t>(input));
-  for (InType i = 0; i < input; ++i) {
-    double angle = (2.0 * kPi * static_cast<double>(i)) / static_cast<double>(input);
-    points.emplace_back(std::cos(angle), std::sin(angle), static_cast<int>(i));
-  }
-  GetOutput() = static_cast<OutType>(BuildConvexHull(points));
+  GetOutput() = static_cast<OutType>(hull_stack.size());
   return GetOutput() > 0;
 }
 bool LuschnikovEGrahamCovHallConstrSEQ::PostProcessingImpl() {
