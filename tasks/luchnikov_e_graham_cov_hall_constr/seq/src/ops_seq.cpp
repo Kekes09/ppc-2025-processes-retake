@@ -28,16 +28,18 @@ double DistanceSquared(const Point &a, const Point &b) {
   double dy = a.y - b.y;
   return dx * dx + dy * dy;
 }
-Point FindBottomLeft(const std::vector<Point> &points) {
+std::size_t BuildConvexHull(std::vector<Point> &points) {
+  if (points.size() < 3) {
+    return points.size();
+  }
   auto bottom_left = std::min_element(points.begin(), points.end(), [](const Point &p1, const Point &p2) {
     if (p1.y != p2.y) {
       return p1.y < p2.y;
     }
     return p1.x < p2.x;
   });
-  return *bottom_left;
-}
-void SortByPolarAngle(std::vector<Point> &points, const Point &start) {
+  std::swap(points[0], *bottom_left);
+  Point start = points[0];
   std::sort(points.begin() + 1, points.end(), [&start](const Point &a, const Point &b) {
     double cross = CrossProduct(start, a, b);
     if (std::abs(cross) < kEpsilon) {
@@ -45,20 +47,6 @@ void SortByPolarAngle(std::vector<Point> &points, const Point &start) {
     }
     return cross > 0;
   });
-}
-std::size_t BuildConvexHull(std::vector<Point> &points) {
-  if (points.size() < 3) {
-    return points.size();
-  }
-  auto bottom_left = FindBottomLeft(points);
-  std::swap(points[0], *std::min_element(points.begin(), points.end(), [](const Point &p1, const Point &p2) {
-    if (p1.y != p2.y) {
-      return p1.y < p2.y;
-    }
-    return p1.x < p2.x;
-  }));
-  Point start = points[0];
-  SortByPolarAngle(points, start);
   std::stack<Point> hull_stack;
   hull_stack.push(points[0]);
   hull_stack.push(points[1]);
