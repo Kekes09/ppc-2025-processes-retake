@@ -1,10 +1,7 @@
 #pragma once
-
 #include "luchnikov_e_graham_cov_hall_constr/common/include/common.hpp"
 #include "task/include/task.hpp"
-
 namespace luchnikov_e_graham_cov_hall_constr {
-
 class LuschnikovEGrahamCovHallConstrMPI : public BaseTask {
  public:
   static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
@@ -18,5 +15,4 @@ class LuschnikovEGrahamCovHallConstrMPI : public BaseTask {
   bool RunImpl() override;
   bool PostProcessingImpl() override;
 };
-
 }  // namespace luchnikov_e_graham_cov_hall_constr
