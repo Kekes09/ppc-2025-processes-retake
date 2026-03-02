@@ -15,7 +15,7 @@ namespace luchnikov_e_graham_cov_hall_constr {
 namespace {
 constexpr double kPi = 3.14159265358979323846;
 constexpr double kEpsilon = 1e-10;
-constexpr int kPointDataSize = 3;
+constexpr std::size_t kPointDataSize = 3;
 struct Point {
   double x;
   double y;
