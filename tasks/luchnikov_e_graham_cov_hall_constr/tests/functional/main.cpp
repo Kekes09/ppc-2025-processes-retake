@@ -1,0 +1,367 @@
+#include <gtest/gtest.h>
+#include <stb/stb_image.h>
+
+#include <algorithm>
+#include <array>
+#include <cstddef>
+#include <cstdint>
+#include <numeric>
+#include <random>
+#include <stdexcept>
+#include <string>
+#include <tuple>
+#include <utility>
+#include <vector>
+
+#include "luchnikov_e_graham_cov_hall_constr/common/include/common.hpp"
+#include "luchnikov_e_graham_cov_hall_constr/mpi/include/ops_mpi.hpp"
+#include "luchnikov_e_graham_cov_hall_constr/seq/include/ops_seq.hpp"
+#include "util/include/func_test_util.hpp"
+#include "util/include/util.hpp"
+
+namespace luchnikov_e_graham_cov_hall_constr {
+
+class LuschnikovEGrahamCovHallConstrFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
+ public:
+  static std::string PrintTestParam(const TestType &test_param) {
+    return std::to_string(std::get<0>(test_param)) + "_" + std::get<1>(test_param);
+  }
+
+ protected:
+  void SetUp() override {
+    int width = -1;
+    int height = -1;
+    int channels = -1;
+    std::vector<uint8_t> img;
+    {
+      std::string abs_path = ppc::util::GetAbsoluteTaskPath(PPC_ID_luchnikov_e_graham_cov_hall_constr, "pic.ppm");
+      auto *data = stbi_load(abs_path.c_str(), &width, &height, &channels, STBI_rgb);
+      if (data == nullptr) {
+        throw std::runtime_error("Failed to load image: " + std::string(stbi_failure_reason()));
+      }
+      channels = STBI_rgb;
+      img = std::vector<uint8_t>(data, data + (static_cast<ptrdiff_t>(width * height * channels)));
+      stbi_image_free(data);
+      if (std::cmp_not_equal(width, height)) {
+        throw std::runtime_error("width != height: ");
+      }
+    }
+
+    TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
+    input_data_ = width - height + std::min(std::accumulate(img.begin(), img.end(), 0), channels);
+  }
+
+  bool CheckTestOutputData(OutType &output_data) final {
+    return (input_data_ == output_data);
+  }
+
+  InType GetTestInputData() final {
+    return input_data_;
+  }
+
+ private:
+  InType input_data_ = 0;
+};
+
+namespace {
+
+TEST_P(LuschnikovEGrahamCovHallConstrFuncTestsProcesses, MatmulFromPic) {
+  ExecuteTest(GetParam());
+}
+
+TEST(LuschnikovEGrahamCovHallConstrSEQTest, TrianglePoints) {
+  InType input = 3;
+  LuschnikovEGrahamCovHallConstrSEQ task(input);
+
+  ASSERT_TRUE(task.Validation());
+  ASSERT_TRUE(task.PreProcessing());
+  ASSERT_TRUE(task.Run());
+  ASSERT_TRUE(task.PostProcessing());
+
+  OutType output = task.GetOutput();
+  EXPECT_GT(output, 0);
+}
+
+TEST(LuschnikovEGrahamCovHallConstrSEQTest, SquarePoints) {
+  InType input = 4;
+  LuschnikovEGrahamCovHallConstrSEQ task(input);
+
+  ASSERT_TRUE(task.Validation());
+  ASSERT_TRUE(task.PreProcessing());
+  ASSERT_TRUE(task.Run());
+  ASSERT_TRUE(task.PostProcessing());
+
+  OutType output = task.GetOutput();
+  EXPECT_GT(output, 0);
+}
+
+TEST(LuschnikovEGrahamCovHallConstrSEQTest, PentagonPoints) {
+  InType input = 5;
+  LuschnikovEGrahamCovHallConstrSEQ task(input);
+
+  ASSERT_TRUE(task.Validation());
+  ASSERT_TRUE(task.PreProcessing());
+  ASSERT_TRUE(task.Run());
+  ASSERT_TRUE(task.PostProcessing());
+
+  OutType output = task.GetOutput();
+  EXPECT_GT(output, 0);
+}
+
+TEST(LuschnikovEGrahamCovHallConstrSEQTest, HexagonPoints) {
+  InType input = 6;
+  LuschnikovEGrahamCovHallConstrSEQ task(input);
+
+  ASSERT_TRUE(task.Validation());
+  ASSERT_TRUE(task.PreProcessing());
+  ASSERT_TRUE(task.Run());
+  ASSERT_TRUE(task.PostProcessing());
+
+  OutType output = task.GetOutput();
+  EXPECT_GT(output, 0);
+}
+
+TEST(LuschnikovEGrahamCovHallConstrSEQTest, HeptagonPoints) {
+  InType input = 7;
+  LuschnikovEGrahamCovHallConstrSEQ task(input);
+
+  ASSERT_TRUE(task.Validation());
+  ASSERT_TRUE(task.PreProcessing());
+  ASSERT_TRUE(task.Run());
+  ASSERT_TRUE(task.PostProcessing());
+
+  OutType output = task.GetOutput();
+  EXPECT_GT(output, 0);
+}
+
+TEST(LuschnikovEGrahamCovHallConstrSEQTest, OctagonPoints) {
+  InType input = 8;
+  LuschnikovEGrahamCovHallConstrSEQ task(input);
+
+  ASSERT_TRUE(task.Validation());
+  ASSERT_TRUE(task.PreProcessing());
+  ASSERT_TRUE(task.Run());
+  ASSERT_TRUE(task.PostProcessing());
+
+  OutType output = task.GetOutput();
+  EXPECT_GT(output, 0);
+}
+
+TEST(LuschnikovEGrahamCovHallConstrSEQTest, NonagonPoints) {
+  InType input = 9;
+  LuschnikovEGrahamCovHallConstrSEQ task(input);
+
+  ASSERT_TRUE(task.Validation());
+  ASSERT_TRUE(task.PreProcessing());
+  ASSERT_TRUE(task.Run());
+  ASSERT_TRUE(task.PostProcessing());
+
+  OutType output = task.GetOutput();
+  EXPECT_GT(output, 0);
+}
+
+TEST(LuschnikovEGrahamCovHallConstrSEQTest, DecagonPoints) {
+  InType input = 10;
+  LuschnikovEGrahamCovHallConstrSEQ task(input);
+
+  ASSERT_TRUE(task.Validation());
+  ASSERT_TRUE(task.PreProcessing());
+  ASSERT_TRUE(task.Run());
+  ASSERT_TRUE(task.PostProcessing());
+
+  OutType output = task.GetOutput();
+  EXPECT_GT(output, 0);
+}
+
+TEST(LuschnikovEGrahamCovHallConstrSEQTest, CirclePoints) {
+  InType input = 50;
+  LuschnikovEGrahamCovHallConstrSEQ task(input);
+
+  ASSERT_TRUE(task.Validation());
+  ASSERT_TRUE(task.PreProcessing());
+  ASSERT_TRUE(task.Run());
+  ASSERT_TRUE(task.PostProcessing());
+
+  OutType output = task.GetOutput();
+  EXPECT_GT(output, 0);
+}
+
+TEST(LuschnikovEGrahamCovHallConstrSEQTest, SmallInput) {
+  InType input = 2;
+  LuschnikovEGrahamCovHallConstrSEQ task(input);
+
+  ASSERT_TRUE(task.Validation());
+  ASSERT_TRUE(task.PreProcessing());
+  ASSERT_TRUE(task.Run());
+  ASSERT_TRUE(task.PostProcessing());
+
+  OutType output = task.GetOutput();
+  EXPECT_GT(output, 0);
+}
+
+TEST(LuschnikovEGrahamCovHallConstrSEQTest, InvalidInput) {
+  InType input = -5;
+  LuschnikovEGrahamCovHallConstrSEQ task(input);
+
+  EXPECT_FALSE(task.Validation());
+}
+
+TEST(LuschnikovEGrahamCovHallConstrMPITest, TrianglePoints) {
+  InType input = 3;
+  LuschnikovEGrahamCovHallConstrMPI task(input);
+
+  ASSERT_TRUE(task.Validation());
+  ASSERT_TRUE(task.PreProcessing());
+  ASSERT_TRUE(task.Run());
+  ASSERT_TRUE(task.PostProcessing());
+
+  OutType output = task.GetOutput();
+  EXPECT_GT(output, 0);
+}
+
+TEST(LuschnikovEGrahamCovHallConstrMPITest, SquarePoints) {
+  InType input = 4;
+  LuschnikovEGrahamCovHallConstrMPI task(input);
+
+  ASSERT_TRUE(task.Validation());
+  ASSERT_TRUE(task.PreProcessing());
+  ASSERT_TRUE(task.Run());
+  ASSERT_TRUE(task.PostProcessing());
+
+  OutType output = task.GetOutput();
+  EXPECT_GT(output, 0);
+}
+
+TEST(LuschnikovEGrahamCovHallConstrMPITest, PentagonPoints) {
+  InType input = 5;
+  LuschnikovEGrahamCovHallConstrMPI task(input);
+
+  ASSERT_TRUE(task.Validation());
+  ASSERT_TRUE(task.PreProcessing());
+  ASSERT_TRUE(task.Run());
+  ASSERT_TRUE(task.PostProcessing());
+
+  OutType output = task.GetOutput();
+  EXPECT_GT(output, 0);
+}
+
+TEST(LuschnikovEGrahamCovHallConstrMPITest, HexagonPoints) {
+  InType input = 6;
+  LuschnikovEGrahamCovHallConstrMPI task(input);
+
+  ASSERT_TRUE(task.Validation());
+  ASSERT_TRUE(task.PreProcessing());
+  ASSERT_TRUE(task.Run());
+  ASSERT_TRUE(task.PostProcessing());
+
+  OutType output = task.GetOutput();
+  EXPECT_GT(output, 0);
+}
+
+TEST(LuschnikovEGrahamCovHallConstrMPITest, HeptagonPoints) {
+  InType input = 7;
+  LuschnikovEGrahamCovHallConstrMPI task(input);
+
+  ASSERT_TRUE(task.Validation());
+  ASSERT_TRUE(task.PreProcessing());
+  ASSERT_TRUE(task.Run());
+  ASSERT_TRUE(task.PostProcessing());
+
+  OutType output = task.GetOutput();
+  EXPECT_GT(output, 0);
+}
+
+TEST(LuschnikovEGrahamCovHallConstrMPITest, OctagonPoints) {
+  InType input = 8;
+  LuschnikovEGrahamCovHallConstrMPI task(input);
+
+  ASSERT_TRUE(task.Validation());
+  ASSERT_TRUE(task.PreProcessing());
+  ASSERT_TRUE(task.Run());
+  ASSERT_TRUE(task.PostProcessing());
+
+  OutType output = task.GetOutput();
+  EXPECT_GT(output, 0);
+}
+
+TEST(LuschnikovEGrahamCovHallConstrMPITest, NonagonPoints) {
+  InType input = 9;
+  LuschnikovEGrahamCovHallConstrMPI task(input);
+
+  ASSERT_TRUE(task.Validation());
+  ASSERT_TRUE(task.PreProcessing());
+  ASSERT_TRUE(task.Run());
+  ASSERT_TRUE(task.PostProcessing());
+
+  OutType output = task.GetOutput();
+  EXPECT_GT(output, 0);
+}
+
+TEST(LuschnikovEGrahamCovHallConstrMPITest, DecagonPoints) {
+  InType input = 10;
+  LuschnikovEGrahamCovHallConstrMPI task(input);
+
+  ASSERT_TRUE(task.Validation());
+  ASSERT_TRUE(task.PreProcessing());
+  ASSERT_TRUE(task.Run());
+  ASSERT_TRUE(task.PostProcessing());
+
+  OutType output = task.GetOutput();
+  EXPECT_GT(output, 0);
+}
+
+TEST(LuschnikovEGrahamCovHallConstrMPITest, CirclePoints) {
+  InType input = 50;
+  LuschnikovEGrahamCovHallConstrMPI task(input);
+
+  ASSERT_TRUE(task.Validation());
+  ASSERT_TRUE(task.PreProcessing());
+  ASSERT_TRUE(task.Run());
+  ASSERT_TRUE(task.PostProcessing());
+
+  OutType output = task.GetOutput();
+  EXPECT_GT(output, 0);
+}
+
+TEST(LuschnikovEGrahamCovHallConstrMPITest, SmallInput) {
+  InType input = 2;
+  LuschnikovEGrahamCovHallConstrMPI task(input);
+
+  ASSERT_TRUE(task.Validation());
+  ASSERT_TRUE(task.PreProcessing());
+  ASSERT_TRUE(task.Run());
+  ASSERT_TRUE(task.PostProcessing());
+
+  OutType output = task.GetOutput();
+  EXPECT_GT(output, 0);
+}
+
+TEST(LuschnikovEGrahamCovHallConstrMPITest, InvalidInput) {
+  InType input = -5;
+  LuschnikovEGrahamCovHallConstrMPI task(input);
+
+  EXPECT_FALSE(task.Validation());
+}
+
+const std::array<TestType, 10> kTestParam = {std::make_tuple(3, "triangle"),  std::make_tuple(4, "square"),
+                                             std::make_tuple(5, "pentagon"),  std::make_tuple(6, "hexagon"),
+                                             std::make_tuple(7, "heptagon"),  std::make_tuple(8, "octagon"),
+                                             std::make_tuple(9, "nonagon"),   std::make_tuple(10, "decagon"),
+                                             std::make_tuple(20, "icosagon"), std::make_tuple(100, "large_circle")};
+
+const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<LuschnikovEGrahamCovHallConstrMPI, InType>(
+                                               kTestParam, PPC_SETTINGS_luchnikov_e_graham_cov_hall_constr),
+                                           ppc::util::AddFuncTask<LuschnikovEGrahamCovHallConstrSEQ, InType>(
+                                               kTestParam, PPC_SETTINGS_luchnikov_e_graham_cov_hall_constr));
+
+const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
+
+const auto kPerfTestName = LuschnikovEGrahamCovHallConstrFuncTestsProcesses::PrintFuncTestName<
+    LuschnikovEGrahamCovHallConstrFuncTestsProcesses>;
+
+INSTANTIATE_TEST_SUITE_P(GrahamScanTests, LuschnikovEGrahamCovHallConstrFuncTestsProcesses, kGtestValues,
+                         kPerfTestName);
+
+}  // namespace
+
+}  // namespace luchnikov_e_graham_cov_hall_constr
