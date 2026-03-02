@@ -20,6 +20,7 @@ struct Point {
   double y;
   int index;
 
+  Point() : x(0.0), y(0.0), index(0) {}  // Добавлен конструктор по умолчанию
   Point(double x_val, double y_val, int idx) : x(x_val), y(y_val), index(idx) {}
 };
 
@@ -131,22 +132,39 @@ bool LuschnikovEGrahamCovHallConstrMPI::RunImpl() {
   }
 
   int local_count = send_counts[static_cast<std::size_t>(rank)];
-  std::vector<Point> local_points(static_cast<std::size_t>(local_count));
+
+  // Создаем вектор с помощью reserve и push_back вместо конструктора с размером
+  std::vector<Point> local_points;
+  local_points.reserve(static_cast<std::size_t>(local_count));
 
   if (rank == 0) {
-    for (int i = 0; i < size; ++i) {
+    // Для нулевого процесса копируем данные напрямую
+    for (int i = 0; i < local_count; ++i) {
+      local_points.push_back(all_points[static_cast<std::size_t>(i)]);
+    }
+
+    // Отправляем данные остальным процессам
+    for (int i = 1; i < size; ++i) {
       int start_idx = displs[static_cast<std::size_t>(i)];
       int count = send_counts[static_cast<std::size_t>(i)];
-      if (i == 0) {
-        std::copy(all_points.begin(), all_points.begin() + count, local_points.begin());
-      } else {
-        MPI_Send(all_points.data() + start_idx, sizeof(Point) * static_cast<std::size_t>(count), MPI_BYTE, i, 0,
-                 MPI_COMM_WORLD);
+
+      // Отправляем размер данных
+      MPI_Send(&count, 1, MPI_INT, i, 0, MPI_COMM_WORLD);
+
+      // Отправляем сами точки
+      if (count > 0) {
+        MPI_Send(all_points.data() + start_idx, count * sizeof(Point), MPI_BYTE, i, 1, MPI_COMM_WORLD);
       }
     }
   } else {
-    MPI_Recv(local_points.data(), sizeof(Point) * static_cast<std::size_t>(local_count), MPI_BYTE, 0, 0, MPI_COMM_WORLD,
-             MPI_STATUS_IGNORE);
+    // Для остальных процессов получаем данные
+    int recv_count = 0;
+    MPI_Recv(&recv_count, 1, MPI_INT, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+
+    if (recv_count > 0) {
+      local_points.resize(static_cast<std::size_t>(recv_count));
+      MPI_Recv(local_points.data(), recv_count * sizeof(Point), MPI_BYTE, 0, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    }
   }
 
   auto local_hull = GrahamScan(local_points);
@@ -154,18 +172,31 @@ bool LuschnikovEGrahamCovHallConstrMPI::RunImpl() {
   std::vector<Point> global_hull;
   if (rank == 0) {
     global_hull = std::move(local_hull);
+
     for (int i = 1; i < size; ++i) {
       int recv_count = 0;
-      MPI_Probe(i, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-      MPI_Get_count(MPI_STATUS_IGNORE, MPI_BYTE, &recv_count);
-      std::vector<Point> recv_points(static_cast<std::size_t>(recv_count) / sizeof(Point));
-      MPI_Recv(recv_points.data(), recv_count, MPI_BYTE, i, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-      global_hull.insert(global_hull.end(), recv_points.begin(), recv_points.end());
+      MPI_Recv(&recv_count, 1, MPI_INT, i, 2, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+
+      if (recv_count > 0) {
+        std::vector<Point> recv_points(static_cast<std::size_t>(recv_count));
+        MPI_Recv(recv_points.data(), recv_count * sizeof(Point), MPI_BYTE, i, 3, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+
+        global_hull.insert(global_hull.end(), recv_points.begin(), recv_points.end());
+      }
     }
-    global_hull = GrahamScan(global_hull);
+
+    if (!global_hull.empty()) {
+      global_hull = GrahamScan(global_hull);
+    }
+
     GetOutput() = static_cast<OutType>(global_hull.size());
   } else {
-    MPI_Send(local_hull.data(), static_cast<int>(local_hull.size() * sizeof(Point)), MPI_BYTE, 0, 1, MPI_COMM_WORLD);
+    int local_hull_size = static_cast<int>(local_hull.size());
+    MPI_Send(&local_hull_size, 1, MPI_INT, 0, 2, MPI_COMM_WORLD);
+
+    if (local_hull_size > 0) {
+      MPI_Send(local_hull.data(), local_hull_size * sizeof(Point), MPI_BYTE, 0, 3, MPI_COMM_WORLD);
+    }
   }
 
   const int num_threads = ppc::util::GetNumThreads();

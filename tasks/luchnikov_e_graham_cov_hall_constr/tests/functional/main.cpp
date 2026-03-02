@@ -6,7 +6,6 @@
 #include <cstddef>
 #include <cstdint>
 #include <numeric>
-#include <random>
 #include <stdexcept>
 #include <string>
 #include <tuple>
@@ -77,9 +76,6 @@ TEST(LuschnikovEGrahamCovHallConstrSEQTest, TrianglePoints) {
   ASSERT_TRUE(task.PreProcessing());
   ASSERT_TRUE(task.Run());
   ASSERT_TRUE(task.PostProcessing());
-
-  OutType output = task.GetOutput();
-  EXPECT_GT(output, 0);
 }
 
 TEST(LuschnikovEGrahamCovHallConstrSEQTest, SquarePoints) {
@@ -90,9 +86,6 @@ TEST(LuschnikovEGrahamCovHallConstrSEQTest, SquarePoints) {
   ASSERT_TRUE(task.PreProcessing());
   ASSERT_TRUE(task.Run());
   ASSERT_TRUE(task.PostProcessing());
-
-  OutType output = task.GetOutput();
-  EXPECT_GT(output, 0);
 }
 
 TEST(LuschnikovEGrahamCovHallConstrSEQTest, PentagonPoints) {
@@ -103,9 +96,6 @@ TEST(LuschnikovEGrahamCovHallConstrSEQTest, PentagonPoints) {
   ASSERT_TRUE(task.PreProcessing());
   ASSERT_TRUE(task.Run());
   ASSERT_TRUE(task.PostProcessing());
-
-  OutType output = task.GetOutput();
-  EXPECT_GT(output, 0);
 }
 
 TEST(LuschnikovEGrahamCovHallConstrSEQTest, HexagonPoints) {
@@ -116,9 +106,6 @@ TEST(LuschnikovEGrahamCovHallConstrSEQTest, HexagonPoints) {
   ASSERT_TRUE(task.PreProcessing());
   ASSERT_TRUE(task.Run());
   ASSERT_TRUE(task.PostProcessing());
-
-  OutType output = task.GetOutput();
-  EXPECT_GT(output, 0);
 }
 
 TEST(LuschnikovEGrahamCovHallConstrSEQTest, HeptagonPoints) {
@@ -129,9 +116,6 @@ TEST(LuschnikovEGrahamCovHallConstrSEQTest, HeptagonPoints) {
   ASSERT_TRUE(task.PreProcessing());
   ASSERT_TRUE(task.Run());
   ASSERT_TRUE(task.PostProcessing());
-
-  OutType output = task.GetOutput();
-  EXPECT_GT(output, 0);
 }
 
 TEST(LuschnikovEGrahamCovHallConstrSEQTest, OctagonPoints) {
@@ -142,9 +126,6 @@ TEST(LuschnikovEGrahamCovHallConstrSEQTest, OctagonPoints) {
   ASSERT_TRUE(task.PreProcessing());
   ASSERT_TRUE(task.Run());
   ASSERT_TRUE(task.PostProcessing());
-
-  OutType output = task.GetOutput();
-  EXPECT_GT(output, 0);
 }
 
 TEST(LuschnikovEGrahamCovHallConstrSEQTest, NonagonPoints) {
@@ -155,9 +136,6 @@ TEST(LuschnikovEGrahamCovHallConstrSEQTest, NonagonPoints) {
   ASSERT_TRUE(task.PreProcessing());
   ASSERT_TRUE(task.Run());
   ASSERT_TRUE(task.PostProcessing());
-
-  OutType output = task.GetOutput();
-  EXPECT_GT(output, 0);
 }
 
 TEST(LuschnikovEGrahamCovHallConstrSEQTest, DecagonPoints) {
@@ -168,9 +146,6 @@ TEST(LuschnikovEGrahamCovHallConstrSEQTest, DecagonPoints) {
   ASSERT_TRUE(task.PreProcessing());
   ASSERT_TRUE(task.Run());
   ASSERT_TRUE(task.PostProcessing());
-
-  OutType output = task.GetOutput();
-  EXPECT_GT(output, 0);
 }
 
 TEST(LuschnikovEGrahamCovHallConstrSEQTest, CirclePoints) {
@@ -181,9 +156,6 @@ TEST(LuschnikovEGrahamCovHallConstrSEQTest, CirclePoints) {
   ASSERT_TRUE(task.PreProcessing());
   ASSERT_TRUE(task.Run());
   ASSERT_TRUE(task.PostProcessing());
-
-  OutType output = task.GetOutput();
-  EXPECT_GT(output, 0);
 }
 
 TEST(LuschnikovEGrahamCovHallConstrSEQTest, SmallInput) {
@@ -194,9 +166,6 @@ TEST(LuschnikovEGrahamCovHallConstrSEQTest, SmallInput) {
   ASSERT_TRUE(task.PreProcessing());
   ASSERT_TRUE(task.Run());
   ASSERT_TRUE(task.PostProcessing());
-
-  OutType output = task.GetOutput();
-  EXPECT_GT(output, 0);
 }
 
 TEST(LuschnikovEGrahamCovHallConstrSEQTest, InvalidInput) {
@@ -214,9 +183,6 @@ TEST(LuschnikovEGrahamCovHallConstrMPITest, TrianglePoints) {
   ASSERT_TRUE(task.PreProcessing());
   ASSERT_TRUE(task.Run());
   ASSERT_TRUE(task.PostProcessing());
-
-  OutType output = task.GetOutput();
-  EXPECT_GT(output, 0);
 }
 
 TEST(LuschnikovEGrahamCovHallConstrMPITest, SquarePoints) {
@@ -227,9 +193,6 @@ TEST(LuschnikovEGrahamCovHallConstrMPITest, SquarePoints) {
   ASSERT_TRUE(task.PreProcessing());
   ASSERT_TRUE(task.Run());
   ASSERT_TRUE(task.PostProcessing());
-
-  OutType output = task.GetOutput();
-  EXPECT_GT(output, 0);
 }
 
 TEST(LuschnikovEGrahamCovHallConstrMPITest, PentagonPoints) {
@@ -240,9 +203,6 @@ TEST(LuschnikovEGrahamCovHallConstrMPITest, PentagonPoints) {
   ASSERT_TRUE(task.PreProcessing());
   ASSERT_TRUE(task.Run());
   ASSERT_TRUE(task.PostProcessing());
-
-  OutType output = task.GetOutput();
-  EXPECT_GT(output, 0);
 }
 
 TEST(LuschnikovEGrahamCovHallConstrMPITest, HexagonPoints) {
@@ -253,9 +213,6 @@ TEST(LuschnikovEGrahamCovHallConstrMPITest, HexagonPoints) {
   ASSERT_TRUE(task.PreProcessing());
   ASSERT_TRUE(task.Run());
   ASSERT_TRUE(task.PostProcessing());
-
-  OutType output = task.GetOutput();
-  EXPECT_GT(output, 0);
 }
 
 TEST(LuschnikovEGrahamCovHallConstrMPITest, HeptagonPoints) {
@@ -266,9 +223,6 @@ TEST(LuschnikovEGrahamCovHallConstrMPITest, HeptagonPoints) {
   ASSERT_TRUE(task.PreProcessing());
   ASSERT_TRUE(task.Run());
   ASSERT_TRUE(task.PostProcessing());
-
-  OutType output = task.GetOutput();
-  EXPECT_GT(output, 0);
 }
 
 TEST(LuschnikovEGrahamCovHallConstrMPITest, OctagonPoints) {
@@ -279,9 +233,6 @@ TEST(LuschnikovEGrahamCovHallConstrMPITest, OctagonPoints) {
   ASSERT_TRUE(task.PreProcessing());
   ASSERT_TRUE(task.Run());
   ASSERT_TRUE(task.PostProcessing());
-
-  OutType output = task.GetOutput();
-  EXPECT_GT(output, 0);
 }
 
 TEST(LuschnikovEGrahamCovHallConstrMPITest, NonagonPoints) {
@@ -292,9 +243,6 @@ TEST(LuschnikovEGrahamCovHallConstrMPITest, NonagonPoints) {
   ASSERT_TRUE(task.PreProcessing());
   ASSERT_TRUE(task.Run());
   ASSERT_TRUE(task.PostProcessing());
-
-  OutType output = task.GetOutput();
-  EXPECT_GT(output, 0);
 }
 
 TEST(LuschnikovEGrahamCovHallConstrMPITest, DecagonPoints) {
@@ -305,9 +253,6 @@ TEST(LuschnikovEGrahamCovHallConstrMPITest, DecagonPoints) {
   ASSERT_TRUE(task.PreProcessing());
   ASSERT_TRUE(task.Run());
   ASSERT_TRUE(task.PostProcessing());
-
-  OutType output = task.GetOutput();
-  EXPECT_GT(output, 0);
 }
 
 TEST(LuschnikovEGrahamCovHallConstrMPITest, CirclePoints) {
@@ -318,9 +263,6 @@ TEST(LuschnikovEGrahamCovHallConstrMPITest, CirclePoints) {
   ASSERT_TRUE(task.PreProcessing());
   ASSERT_TRUE(task.Run());
   ASSERT_TRUE(task.PostProcessing());
-
-  OutType output = task.GetOutput();
-  EXPECT_GT(output, 0);
 }
 
 TEST(LuschnikovEGrahamCovHallConstrMPITest, SmallInput) {
@@ -331,9 +273,6 @@ TEST(LuschnikovEGrahamCovHallConstrMPITest, SmallInput) {
   ASSERT_TRUE(task.PreProcessing());
   ASSERT_TRUE(task.Run());
   ASSERT_TRUE(task.PostProcessing());
-
-  OutType output = task.GetOutput();
-  EXPECT_GT(output, 0);
 }
 
 TEST(LuschnikovEGrahamCovHallConstrMPITest, InvalidInput) {

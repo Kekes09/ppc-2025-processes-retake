@@ -18,6 +18,7 @@ struct Point {
   double y;
   int index;
 
+  Point() : x(0.0), y(0.0), index(0) {}  // Добавлен конструктор по умолчанию
   Point(double x_val, double y_val, int idx) : x(x_val), y(y_val), index(idx) {}
 };
 
