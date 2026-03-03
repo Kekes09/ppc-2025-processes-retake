@@ -13,6 +13,8 @@
 #include "util/include/util.hpp"
 namespace luchnikov_e_graham_cov_hall_constr {
 namespace {
+constexpr double kPi = 3.14159265358979323846;
+constexpr double kTwoPi = 2.0 * kPi;
 constexpr double kEpsilon = 1e-10;
 constexpr std::size_t kMinHullPoints = 3;
 constexpr std::size_t kPointDataSize = 3;
@@ -110,14 +112,37 @@ std::vector<Point> GenerateConvexPoints(InType count) {
   std::vector<Point> points;
   points.reserve(static_cast<std::size_t>(count));
   for (InType i = 0; i < count; ++i) {
-    double x = static_cast<double>(i);
-    double y = x * x;
-    points.emplace_back(x, y, static_cast<int>(i));
+    double angle = (kTwoPi * static_cast<double>(i)) / static_cast<double>(count);
+    points.emplace_back(std::cos(angle), std::sin(angle), static_cast<int>(i));
   }
   return points;
 }
-void DistributePoints(const std::vector<Point> &all_points, int rank, int size, InType input,
-                      std::vector<Point> &local_points) {
+}  // namespace
+LuschnikovEGrahamCovHallConstrMPI::LuschnikovEGrahamCovHallConstrMPI(const InType &in) {
+  SetTypeOfTask(GetStaticTypeOfTask());
+  GetInput() = in;
+  GetOutput() = 0;
+}
+bool LuschnikovEGrahamCovHallConstrMPI::ValidationImpl() {
+  return (GetInput() > 0) && (GetOutput() == 0);
+}
+bool LuschnikovEGrahamCovHallConstrMPI::PreProcessingImpl() {
+  GetOutput() = 0;
+  return true;
+}
+bool LuschnikovEGrahamCovHallConstrMPI::RunImpl() {
+  auto input = GetInput();
+  if (input <= 0) {
+    return false;
+  }
+  int rank = 0;
+  int size = 0;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  MPI_Comm_size(MPI_COMM_WORLD, &size);
+  std::vector<Point> all_points;
+  if (rank == 0) {
+    all_points = GenerateConvexPoints(input);
+  }
   int points_per_proc = static_cast<int>(input) / size;
   int remainder = static_cast<int>(input) % size;
   std::vector<int> send_counts(static_cast<std::size_t>(size), 0);
@@ -130,6 +155,7 @@ void DistributePoints(const std::vector<Point> &all_points, int rank, int size, 
     }
   }
   int local_count = send_counts[static_cast<std::size_t>(rank)];
+  std::vector<Point> local_points;
   local_points.reserve(static_cast<std::size_t>(local_count));
   if (rank == 0) {
     for (int i = 0; i < local_count; ++i) {
@@ -160,8 +186,7 @@ void DistributePoints(const std::vector<Point> &all_points, int rank, int size, 
       local_points = UnpackPoints(buffer);
     }
   }
-}
-void CollectHulls(std::vector<Point> &local_hull, int rank, int size, OutType &output) {
+  auto local_hull = GrahamScan(local_points);
   std::vector<Point> global_hull;
   if (rank == 0) {
     global_hull = std::move(local_hull);
@@ -179,7 +204,7 @@ void CollectHulls(std::vector<Point> &local_hull, int rank, int size, OutType &o
     if (!global_hull.empty()) {
       global_hull = GrahamScan(global_hull);
     }
-    output = static_cast<OutType>(global_hull.size());
+    GetOutput() = static_cast<OutType>(global_hull.size());
   } else {
     int local_hull_size = static_cast<int>(local_hull.size());
     MPI_Send(&local_hull_size, 1, MPI_INT, 0, kTagHullSize, MPI_COMM_WORLD);
@@ -189,37 +214,6 @@ void CollectHulls(std::vector<Point> &local_hull, int rank, int size, OutType &o
       MPI_Send(buffer.data(), static_cast<int>(buffer.size()), MPI_DOUBLE, 0, kTagHullData, MPI_COMM_WORLD);
     }
   }
-}
-}  // namespace
-LuschnikovEGrahamCovHallConstrMPI::LuschnikovEGrahamCovHallConstrMPI(const InType &in) {
-  SetTypeOfTask(GetStaticTypeOfTask());
-  GetInput() = in;
-  GetOutput() = 0;
-}
-bool LuschnikovEGrahamCovHallConstrMPI::ValidationImpl() {
-  return (GetInput() > 0) && (GetOutput() == 0);
-}
-bool LuschnikovEGrahamCovHallConstrMPI::PreProcessingImpl() {
-  GetOutput() = 0;
-  return true;
-}
-bool LuschnikovEGrahamCovHallConstrMPI::RunImpl() {
-  auto input = GetInput();
-  if (input <= 0) {
-    return false;
-  }
-  int rank = 0;
-  int size = 0;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  MPI_Comm_size(MPI_COMM_WORLD, &size);
-  std::vector<Point> all_points;
-  if (rank == 0) {
-    all_points = GenerateConvexPoints(input);
-  }
-  std::vector<Point> local_points;
-  DistributePoints(all_points, rank, size, input, local_points);
-  auto local_hull = GrahamScan(local_points);
-  CollectHulls(local_hull, rank, size, GetOutput());
   MPI_Barrier(MPI_COMM_WORLD);
   return GetOutput() > 0;
 }

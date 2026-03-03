@@ -11,6 +11,8 @@
 #include "util/include/util.hpp"
 namespace luchnikov_e_graham_cov_hall_constr {
 namespace {
+constexpr double kPi = 3.14159265358979323846;
+constexpr double kTwoPi = 2.0 * kPi;
 constexpr double kEpsilon = 1e-10;
 constexpr std::size_t kMinHullPoints = 3;
 struct Point {
@@ -69,9 +71,8 @@ std::vector<Point> GenerateConvexPoints(InType count) {
   std::vector<Point> points;
   points.reserve(static_cast<std::size_t>(count));
   for (InType i = 0; i < count; ++i) {
-    double x = static_cast<double>(i);
-    double y = x * x;
-    points.emplace_back(x, y, static_cast<int>(i));
+    double angle = (kTwoPi * static_cast<double>(i)) / static_cast<double>(count);
+    points.emplace_back(std::cos(angle), std::sin(angle), static_cast<int>(i));
   }
   return points;
 }
