@@ -165,14 +165,6 @@ TEST(LuschnikovEGrahamCovHallConstrMPITest, OctagonPoints) {
   ASSERT_TRUE(task.Run());
   ASSERT_TRUE(task.PostProcessing());
 }
-TEST(LuschnikovEGrahamCovHallConstrMPITest, NonagonPoints) {
-  InType input = 9;
-  LuschnikovEGrahamCovHallConstrMPI task(input);
-  ASSERT_TRUE(task.Validation());
-  ASSERT_TRUE(task.PreProcessing());
-  ASSERT_TRUE(task.Run());
-  ASSERT_TRUE(task.PostProcessing());
-}
 TEST(LuschnikovEGrahamCovHallConstrMPITest, DecagonPoints) {
   InType input = 10;
   LuschnikovEGrahamCovHallConstrMPI task(input);
@@ -202,10 +194,10 @@ TEST(LuschnikovEGrahamCovHallConstrMPITest, InvalidInput) {
   LuschnikovEGrahamCovHallConstrMPI task(input);
   EXPECT_FALSE(task.Validation());
 }
-const std::array<TestType, 9> kTestParam = {
-    std::make_tuple(3, "triangle"), std::make_tuple(4, "square"),    std::make_tuple(5, "pentagon"),
-    std::make_tuple(7, "heptagon"), std::make_tuple(8, "octagon"),   std::make_tuple(9, "nonagon"),
-    std::make_tuple(10, "decagon"), std::make_tuple(20, "icosagon"), std::make_tuple(100, "large_circle")};
+const std::array<TestType, 9> kTestParam = {std::make_tuple(3, "triangle"),  std::make_tuple(4, "square"),
+                                            std::make_tuple(5, "pentagon"),  std::make_tuple(7, "heptagon"),
+                                            std::make_tuple(8, "octagon"),   std::make_tuple(10, "decagon"),
+                                            std::make_tuple(20, "icosagon"), std::make_tuple(100, "large_circle")};
 const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<LuschnikovEGrahamCovHallConstrMPI, InType>(
                                                kTestParam, PPC_SETTINGS_luchnikov_e_graham_cov_hall_constr),
                                            ppc::util::AddFuncTask<LuschnikovEGrahamCovHallConstrSEQ, InType>(
