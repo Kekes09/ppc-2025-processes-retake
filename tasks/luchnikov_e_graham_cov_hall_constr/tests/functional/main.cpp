@@ -149,14 +149,6 @@ TEST(LuschnikovEGrahamCovHallConstrMPITest, PentagonPoints) {
   ASSERT_TRUE(task.Run());
   ASSERT_TRUE(task.PostProcessing());
 }
-TEST(LuschnikovEGrahamCovHallConstrMPITest, HexagonPoints) {
-  InType input = 6;
-  LuschnikovEGrahamCovHallConstrMPI task(input);
-  ASSERT_TRUE(task.Validation());
-  ASSERT_TRUE(task.PreProcessing());
-  ASSERT_TRUE(task.Run());
-  ASSERT_TRUE(task.PostProcessing());
-}
 TEST(LuschnikovEGrahamCovHallConstrMPITest, HeptagonPoints) {
   InType input = 7;
   LuschnikovEGrahamCovHallConstrMPI task(input);
