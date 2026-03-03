@@ -2,12 +2,12 @@
 #include "luchnikov_e_graham_cov_hall_constr/common/include/common.hpp"
 #include "task/include/task.hpp"
 namespace luchnikov_e_graham_cov_hall_constr {
-class LuschnikovEGrahamCovHallConstrSEQ : public BaseTask {
+class LuschnikovEGrahamCovHallConstrMPI : public BaseTask {
  public:
   static constexpr ppc::task::TypeOfTask GetStaticTypeOfTask() {
-    return ppc::task::TypeOfTask::kSEQ;
+    return ppc::task::TypeOfTask::kMPI;
   }
-  explicit LuschnikovEGrahamCovHallConstrSEQ(const InType &in);
+  explicit LuschnikovEGrahamCovHallConstrMPI(const InType &in);
 
  private:
   bool ValidationImpl() override;
