@@ -41,6 +41,9 @@ void PackPoints(const std::vector<Point> &points, std::vector<double> &buffer) {
 }
 std::vector<Point> UnpackPoints(const std::vector<double> &buffer) {
   std::vector<Point> points;
+  if (buffer.empty()) {
+    return points;
+  }
   std::size_t count = buffer.size() / kPointDataSize;
   points.reserve(count);
   for (std::size_t i = 0; i < count; ++i) {
