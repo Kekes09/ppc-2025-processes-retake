@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-
+// [ИСПРАВЛЕНО] Удалён stb_image.h (обработка изображения не нужна)
 #include <algorithm>
 #include <array>
 #include <cstddef>
@@ -23,8 +23,9 @@ class LuschnikovEGrahamCovHallConstrFuncTestsProcesses : public ppc::util::BaseR
 
  protected:
   void SetUp() override {
+    // [ИСПРАВЛЕНО] Удалена загрузка изображения, используется напрямую input
     TestType params = std::get<static_cast<std::size_t>(ppc::util::GTestParamIndex::kTestParams)>(GetParam());
-    input_data_ = std::get<0>(params);
+    input_data_ = std::get<0>(params);  // [ИСПРАВЛЕНО] Прямое использование
   }
   bool CheckTestOutputData(OutType &output_data) final {
     return (input_data_ == output_data);
@@ -40,6 +41,7 @@ namespace {
 TEST_P(LuschnikovEGrahamCovHallConstrFuncTestsProcesses, MatmulFromPic) {
   ExecuteTest(GetParam());
 }
+// SEQ тесты
 TEST(LuschnikovEGrahamCovHallConstrSEQTest, TrianglePoints) {
   InType input = 3;
   LuschnikovEGrahamCovHallConstrSEQ task(input);
@@ -123,6 +125,92 @@ TEST(LuschnikovEGrahamCovHallConstrSEQTest, SmallInput) {
 TEST(LuschnikovEGrahamCovHallConstrSEQTest, InvalidInput) {
   InType input = -5;
   LuschnikovEGrahamCovHallConstrSEQ task(input);
+  EXPECT_FALSE(task.Validation());
+}
+// [ИСПРАВЛЕНО] Восстановлены MPI тесты
+TEST(LuschnikovEGrahamCovHallConstrMPITest, TrianglePoints) {
+  InType input = 3;
+  LuschnikovEGrahamCovHallConstrMPI task(input);
+  ASSERT_TRUE(task.Validation());
+  ASSERT_TRUE(task.PreProcessing());
+  ASSERT_TRUE(task.Run());
+  ASSERT_TRUE(task.PostProcessing());
+}
+TEST(LuschnikovEGrahamCovHallConstrMPITest, SquarePoints) {
+  InType input = 4;
+  LuschnikovEGrahamCovHallConstrMPI task(input);
+  ASSERT_TRUE(task.Validation());
+  ASSERT_TRUE(task.PreProcessing());
+  ASSERT_TRUE(task.Run());
+  ASSERT_TRUE(task.PostProcessing());
+}
+TEST(LuschnikovEGrahamCovHallConstrMPITest, PentagonPoints) {
+  InType input = 5;
+  LuschnikovEGrahamCovHallConstrMPI task(input);
+  ASSERT_TRUE(task.Validation());
+  ASSERT_TRUE(task.PreProcessing());
+  ASSERT_TRUE(task.Run());
+  ASSERT_TRUE(task.PostProcessing());
+}
+TEST(LuschnikovEGrahamCovHallConstrMPITest, HexagonPoints) {
+  InType input = 6;
+  LuschnikovEGrahamCovHallConstrMPI task(input);
+  ASSERT_TRUE(task.Validation());
+  ASSERT_TRUE(task.PreProcessing());
+  ASSERT_TRUE(task.Run());
+  ASSERT_TRUE(task.PostProcessing());
+}
+TEST(LuschnikovEGrahamCovHallConstrMPITest, HeptagonPoints) {
+  InType input = 7;
+  LuschnikovEGrahamCovHallConstrMPI task(input);
+  ASSERT_TRUE(task.Validation());
+  ASSERT_TRUE(task.PreProcessing());
+  ASSERT_TRUE(task.Run());
+  ASSERT_TRUE(task.PostProcessing());
+}
+TEST(LuschnikovEGrahamCovHallConstrMPITest, OctagonPoints) {
+  InType input = 8;
+  LuschnikovEGrahamCovHallConstrMPI task(input);
+  ASSERT_TRUE(task.Validation());
+  ASSERT_TRUE(task.PreProcessing());
+  ASSERT_TRUE(task.Run());
+  ASSERT_TRUE(task.PostProcessing());
+}
+TEST(LuschnikovEGrahamCovHallConstrMPITest, NonagonPoints) {
+  InType input = 9;
+  LuschnikovEGrahamCovHallConstrMPI task(input);
+  ASSERT_TRUE(task.Validation());
+  ASSERT_TRUE(task.PreProcessing());
+  ASSERT_TRUE(task.Run());
+  ASSERT_TRUE(task.PostProcessing());
+}
+TEST(LuschnikovEGrahamCovHallConstrMPITest, DecagonPoints) {
+  InType input = 10;
+  LuschnikovEGrahamCovHallConstrMPI task(input);
+  ASSERT_TRUE(task.Validation());
+  ASSERT_TRUE(task.PreProcessing());
+  ASSERT_TRUE(task.Run());
+  ASSERT_TRUE(task.PostProcessing());
+}
+TEST(LuschnikovEGrahamCovHallConstrMPITest, CirclePoints) {
+  InType input = 50;
+  LuschnikovEGrahamCovHallConstrMPI task(input);
+  ASSERT_TRUE(task.Validation());
+  ASSERT_TRUE(task.PreProcessing());
+  ASSERT_TRUE(task.Run());
+  ASSERT_TRUE(task.PostProcessing());
+}
+TEST(LuschnikovEGrahamCovHallConstrMPITest, SmallInput) {
+  InType input = 2;
+  LuschnikovEGrahamCovHallConstrMPI task(input);
+  ASSERT_TRUE(task.Validation());
+  ASSERT_TRUE(task.PreProcessing());
+  ASSERT_TRUE(task.Run());
+  ASSERT_TRUE(task.PostProcessing());
+}
+TEST(LuschnikovEGrahamCovHallConstrMPITest, InvalidInput) {
+  InType input = -5;
+  LuschnikovEGrahamCovHallConstrMPI task(input);
   EXPECT_FALSE(task.Validation());
 }
 const std::array<TestType, 10> kTestParam = {std::make_tuple(3, "triangle"),  std::make_tuple(4, "square"),

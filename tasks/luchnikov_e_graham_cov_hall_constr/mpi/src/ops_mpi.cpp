@@ -1,14 +1,11 @@
 #include "luchnikov_e_graham_cov_hall_constr/mpi/include/ops_mpi.hpp"
-
 #include <mpi.h>
-
 #include <algorithm>
 #include <cmath>
 #include <cstddef>
 #include <stack>
 #include <utility>
 #include <vector>
-
 #include "luchnikov_e_graham_cov_hall_constr/common/include/common.hpp"
 #include "util/include/util.hpp"
 namespace luchnikov_e_graham_cov_hall_constr {
@@ -54,18 +51,22 @@ std::vector<Point> GrahamScan(std::vector<Point> points) {
   if (points.size() < kMinHullPoints) {
     return points;
   }
-  auto bottom_left = std::min_element(points.begin(), points.end(), ComparePointsByYThenX);
+  auto bottom_left = std::min_element(points.begin(), points.end(),
+                                       ComparePointsByYThenX);
   std::swap(points[0], *bottom_left);
   Point start = points[0];
   std::sort(points.begin() + 1, points.end(),
-            [&start](const Point &a, const Point &b) { return CompareByPolarAngle(start, a, b); });
+            [&start](const Point &a, const Point &b) {
+              return CompareByPolarAngle(start, a, b);
+            });
   std::stack<Point> hull_stack;
   hull_stack.push(points[0]);
   hull_stack.push(points[1]);
   for (std::size_t i = kMinHullPoints - 1; i < points.size(); ++i) {
     Point top = hull_stack.top();
     hull_stack.pop();
-    while (!hull_stack.empty() && CrossProduct(hull_stack.top(), top, points[i]) <= 0) {
+    while (!hull_stack.empty() &&
+           CrossProduct(hull_stack.top(), top, points[i]) <= 0) {
       top = hull_stack.top();
       hull_stack.pop();
     }
@@ -118,7 +119,8 @@ std::vector<Point> GenerateConvexPoints(InType count) {
   return points;
 }
 }  // namespace
-LuschnikovEGrahamCovHallConstrMPI::LuschnikovEGrahamCovHallConstrMPI(const InType &in) {
+LuschnikovEGrahamCovHallConstrMPI::LuschnikovEGrahamCovHallConstrMPI(
+    const InType &in) {
   SetTypeOfTask(GetStaticTypeOfTask());
   GetInput() = in;
   GetOutput() = 0;
@@ -148,10 +150,12 @@ bool LuschnikovEGrahamCovHallConstrMPI::RunImpl() {
   std::vector<int> send_counts(static_cast<std::size_t>(size), 0);
   std::vector<int> displs(static_cast<std::size_t>(size), 0);
   for (int i = 0; i < size; ++i) {
-    send_counts[static_cast<std::size_t>(i)] = (i < remainder) ? (points_per_proc + 1) : points_per_proc;
+    send_counts[static_cast<std::size_t>(i)] =
+        (i < remainder) ? (points_per_proc + 1) : points_per_proc;
     if (i > 0) {
       displs[static_cast<std::size_t>(i)] =
-          displs[static_cast<std::size_t>(i - 1)] + send_counts[static_cast<std::size_t>(i - 1)];
+          displs[static_cast<std::size_t>(i - 1)] +
+          send_counts[static_cast<std::size_t>(i - 1)];
     }
   }
   int local_count = send_counts[static_cast<std::size_t>(rank)];
@@ -170,19 +174,23 @@ bool LuschnikovEGrahamCovHallConstrMPI::RunImpl() {
         std::vector<Point> temp_points;
         temp_points.reserve(static_cast<std::size_t>(count));
         for (int j = 0; j < count; ++j) {
-          temp_points.push_back(all_points[static_cast<std::size_t>(start_idx + j)]);
+          temp_points.push_back(
+              all_points[static_cast<std::size_t>(start_idx + j)]);
         }
         PackPoints(temp_points, buffer);
-        MPI_Send(buffer.data(), static_cast<int>(buffer.size()), MPI_DOUBLE, i, kTagPoints, MPI_COMM_WORLD);
+        MPI_Send(buffer.data(), static_cast<int>(buffer.size()), MPI_DOUBLE, i,
+                 kTagPoints, MPI_COMM_WORLD);
       }
     }
   } else {
     int recv_count = 0;
-    MPI_Recv(&recv_count, 1, MPI_INT, 0, kTagCount, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    MPI_Recv(&recv_count, 1, MPI_INT, 0, kTagCount, MPI_COMM_WORLD,
+             MPI_STATUS_IGNORE);
     if (recv_count > 0) {
-      std::vector<double> buffer(static_cast<std::size_t>(recv_count) * kPointDataSize);
-      MPI_Recv(buffer.data(), static_cast<int>(buffer.size()), MPI_DOUBLE, 0, kTagPoints, MPI_COMM_WORLD,
-               MPI_STATUS_IGNORE);
+      std::vector<double> buffer(static_cast<std::size_t>(recv_count) *
+                                 kPointDataSize);
+      MPI_Recv(buffer.data(), static_cast<int>(buffer.size()), MPI_DOUBLE, 0,
+               kTagPoints, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
       local_points = UnpackPoints(buffer);
     }
   }
@@ -192,13 +200,16 @@ bool LuschnikovEGrahamCovHallConstrMPI::RunImpl() {
     global_hull = std::move(local_hull);
     for (int i = 1; i < size; ++i) {
       int recv_count = 0;
-      MPI_Recv(&recv_count, 1, MPI_INT, i, kTagHullSize, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+      MPI_Recv(&recv_count, 1, MPI_INT, i, kTagHullSize, MPI_COMM_WORLD,
+               MPI_STATUS_IGNORE);
       if (recv_count > 0) {
-        std::vector<double> buffer(static_cast<std::size_t>(recv_count) * kPointDataSize);
-        MPI_Recv(buffer.data(), static_cast<int>(buffer.size()), MPI_DOUBLE, i, kTagHullData, MPI_COMM_WORLD,
-                 MPI_STATUS_IGNORE);
+        std::vector<double> buffer(static_cast<std::size_t>(recv_count) *
+                                   kPointDataSize);
+        MPI_Recv(buffer.data(), static_cast<int>(buffer.size()), MPI_DOUBLE, i,
+                 kTagHullData, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
         auto recv_points = UnpackPoints(buffer);
-        global_hull.insert(global_hull.end(), recv_points.begin(), recv_points.end());
+        global_hull.insert(global_hull.end(), recv_points.begin(),
+                           recv_points.end());
       }
     }
     if (!global_hull.empty()) {
@@ -211,7 +222,8 @@ bool LuschnikovEGrahamCovHallConstrMPI::RunImpl() {
     if (local_hull_size > 0) {
       std::vector<double> buffer;
       PackPoints(local_hull, buffer);
-      MPI_Send(buffer.data(), static_cast<int>(buffer.size()), MPI_DOUBLE, 0, kTagHullData, MPI_COMM_WORLD);
+      MPI_Send(buffer.data(), static_cast<int>(buffer.size()), MPI_DOUBLE, 0,
+               kTagHullData, MPI_COMM_WORLD);
     }
   }
   MPI_Barrier(MPI_COMM_WORLD);
