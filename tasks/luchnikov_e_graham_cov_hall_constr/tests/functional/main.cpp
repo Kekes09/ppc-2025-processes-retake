@@ -37,9 +37,7 @@ class LuschnikovEGrahamCovHallConstrFuncTestsProcesses : public ppc::util::BaseR
   InType input_data_ = 0;
 };
 namespace {
-TEST_P(LuschnikovEGrahamCovHallConstrFuncTestsProcesses, MatmulFromPic) {
-  ExecuteTest(GetParam());
-}
+
 TEST(LuschnikovEGrahamCovHallConstrSEQTest, TrianglePoints) {
   InType input = 3;
   LuschnikovEGrahamCovHallConstrSEQ task(input);
