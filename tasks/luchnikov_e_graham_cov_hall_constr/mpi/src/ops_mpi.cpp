@@ -13,8 +13,6 @@
 #include "util/include/util.hpp"
 namespace luchnikov_e_graham_cov_hall_constr {
 namespace {
-constexpr double kPi = 3.14159265358979323846;
-constexpr double kTwoPi = 2.0 * kPi;
 constexpr double kEpsilon = 1e-10;
 constexpr std::size_t kMinHullPoints = 3;
 constexpr std::size_t kPointDataSize = 3;
@@ -108,12 +106,13 @@ std::vector<Point> UnpackPoints(const std::vector<double> &buffer) {
   }
   return points;
 }
-std::vector<Point> GenerateCirclePoints(InType count) {
+std::vector<Point> GenerateConvexPoints(InType count) {
   std::vector<Point> points;
   points.reserve(static_cast<std::size_t>(count));
   for (InType i = 0; i < count; ++i) {
-    double angle = (kTwoPi * static_cast<double>(i)) / static_cast<double>(count);
-    points.emplace_back(std::cos(angle), std::sin(angle), static_cast<int>(i));
+    double x = static_cast<double>(i);
+    double y = x * x;
+    points.emplace_back(x, y, static_cast<int>(i));
   }
   return points;
 }
@@ -215,7 +214,7 @@ bool LuschnikovEGrahamCovHallConstrMPI::RunImpl() {
   MPI_Comm_size(MPI_COMM_WORLD, &size);
   std::vector<Point> all_points;
   if (rank == 0) {
-    all_points = GenerateCirclePoints(input);
+    all_points = GenerateConvexPoints(input);
   }
   std::vector<Point> local_points;
   DistributePoints(all_points, rank, size, input, local_points);
