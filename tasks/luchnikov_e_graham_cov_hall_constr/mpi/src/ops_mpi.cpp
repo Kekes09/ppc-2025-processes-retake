@@ -14,8 +14,14 @@
 namespace luchnikov_e_graham_cov_hall_constr {
 namespace {
 constexpr double kPi = 3.14159265358979323846;
+constexpr double kTwoPi = 2.0 * kPi;
 constexpr double kEpsilon = 1e-10;
+constexpr std::size_t kMinHullPoints = 3;
 constexpr std::size_t kPointDataSize = 3;
+constexpr int kTagCount = 0;
+constexpr int kTagPoints = 1;
+constexpr int kTagHullSize = 2;
+constexpr int kTagHullData = 3;
 struct Point {
   double x;
   double y;
@@ -31,7 +37,54 @@ double DistanceSquared(const Point &a, const Point &b) {
   double dy = a.y - b.y;
   return dx * dx + dy * dy;
 }
+bool ComparePointsByYThenX(const Point &p1, const Point &p2) {
+  if (p1.y != p2.y) {
+    return p1.y < p2.y;
+  }
+  return p1.x < p2.x;
+}
+bool CompareByPolarAngle(const Point &start, const Point &a, const Point &b) {
+  double cross = CrossProduct(start, a, b);
+  if (std::abs(cross) < kEpsilon) {
+    return DistanceSquared(start, a) < DistanceSquared(start, b);
+  }
+  return cross > 0;
+}
+std::vector<Point> GrahamScan(std::vector<Point> points) {
+  if (points.size() < kMinHullPoints) {
+    return points;
+  }
+  auto bottom_left = std::min_element(points.begin(), points.end(), ComparePointsByYThenX);
+  std::swap(points[0], *bottom_left);
+  Point start = points[0];
+  std::sort(points.begin() + 1, points.end(),
+            [&start](const Point &a, const Point &b) { return CompareByPolarAngle(start, a, b); });
+  std::stack<Point> hull_stack;
+  hull_stack.push(points[0]);
+  hull_stack.push(points[1]);
+  for (std::size_t i = kMinHullPoints - 1; i < points.size(); ++i) {
+    Point top = hull_stack.top();
+    hull_stack.pop();
+    while (!hull_stack.empty() && CrossProduct(hull_stack.top(), top, points[i]) <= 0) {
+      top = hull_stack.top();
+      hull_stack.pop();
+    }
+    hull_stack.push(top);
+    hull_stack.push(points[i]);
+  }
+  std::vector<Point> result;
+  result.reserve(hull_stack.size());
+  while (!hull_stack.empty()) {
+    result.push_back(hull_stack.top());
+    hull_stack.pop();
+  }
+  return result;
+}
 void PackPoints(const std::vector<Point> &points, std::vector<double> &buffer) {
+  if (points.empty()) {
+    buffer.clear();
+    return;
+  }
   buffer.resize(points.size() * kPointDataSize);
   for (std::size_t i = 0; i < points.size(); ++i) {
     buffer[i * kPointDataSize] = points[i].x;
@@ -55,45 +108,88 @@ std::vector<Point> UnpackPoints(const std::vector<double> &buffer) {
   }
   return points;
 }
-std::vector<Point> GrahamScan(std::vector<Point> points) {
-  if (points.size() < 3) {
-    return points;
+std::vector<Point> GenerateCirclePoints(InType count) {
+  std::vector<Point> points;
+  points.reserve(static_cast<std::size_t>(count));
+  for (InType i = 0; i < count; ++i) {
+    double angle = (kTwoPi * static_cast<double>(i)) / static_cast<double>(count);
+    points.emplace_back(std::cos(angle), std::sin(angle), static_cast<int>(i));
   }
-  auto bottom_left = std::min_element(points.begin(), points.end(), [](const Point &p1, const Point &p2) {
-    if (p1.y != p2.y) {
-      return p1.y < p2.y;
+  return points;
+}
+void DistributePoints(const std::vector<Point> &all_points, int rank, int size, InType input,
+                      std::vector<Point> &local_points) {
+  int points_per_proc = static_cast<int>(input) / size;
+  int remainder = static_cast<int>(input) % size;
+  std::vector<int> send_counts(static_cast<std::size_t>(size), 0);
+  std::vector<int> displs(static_cast<std::size_t>(size), 0);
+  for (int i = 0; i < size; ++i) {
+    send_counts[static_cast<std::size_t>(i)] = (i < remainder) ? (points_per_proc + 1) : points_per_proc;
+    if (i > 0) {
+      displs[static_cast<std::size_t>(i)] =
+          displs[static_cast<std::size_t>(i - 1)] + send_counts[static_cast<std::size_t>(i - 1)];
     }
-    return p1.x < p2.x;
-  });
-  std::swap(points[0], *bottom_left);
-  Point start = points[0];
-  std::sort(points.begin() + 1, points.end(), [&start](const Point &a, const Point &b) {
-    double cross = CrossProduct(start, a, b);
-    if (std::abs(cross) < kEpsilon) {
-      return DistanceSquared(start, a) < DistanceSquared(start, b);
-    }
-    return cross > 0;
-  });
-  std::stack<Point> hull_stack;
-  hull_stack.push(points[0]);
-  hull_stack.push(points[1]);
-  for (std::size_t i = 2; i < points.size(); ++i) {
-    Point top = hull_stack.top();
-    hull_stack.pop();
-    while (!hull_stack.empty() && CrossProduct(hull_stack.top(), top, points[i]) <= 0) {
-      top = hull_stack.top();
-      hull_stack.pop();
-    }
-    hull_stack.push(top);
-    hull_stack.push(points[i]);
   }
-  std::vector<Point> result;
-  result.reserve(hull_stack.size());
-  while (!hull_stack.empty()) {
-    result.push_back(hull_stack.top());
-    hull_stack.pop();
+  int local_count = send_counts[static_cast<std::size_t>(rank)];
+  local_points.reserve(static_cast<std::size_t>(local_count));
+  if (rank == 0) {
+    for (int i = 0; i < local_count; ++i) {
+      local_points.push_back(all_points[static_cast<std::size_t>(i)]);
+    }
+    for (int i = 1; i < size; ++i) {
+      int start_idx = displs[static_cast<std::size_t>(i)];
+      int count = send_counts[static_cast<std::size_t>(i)];
+      MPI_Send(&count, 1, MPI_INT, i, kTagCount, MPI_COMM_WORLD);
+      if (count > 0) {
+        std::vector<double> buffer;
+        std::vector<Point> temp_points;
+        temp_points.reserve(static_cast<std::size_t>(count));
+        for (int j = 0; j < count; ++j) {
+          temp_points.push_back(all_points[static_cast<std::size_t>(start_idx + j)]);
+        }
+        PackPoints(temp_points, buffer);
+        MPI_Send(buffer.data(), static_cast<int>(buffer.size()), MPI_DOUBLE, i, kTagPoints, MPI_COMM_WORLD);
+      }
+    }
+  } else {
+    int recv_count = 0;
+    MPI_Recv(&recv_count, 1, MPI_INT, 0, kTagCount, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    if (recv_count > 0) {
+      std::vector<double> buffer(static_cast<std::size_t>(recv_count) * kPointDataSize);
+      MPI_Recv(buffer.data(), static_cast<int>(buffer.size()), MPI_DOUBLE, 0, kTagPoints, MPI_COMM_WORLD,
+               MPI_STATUS_IGNORE);
+      local_points = UnpackPoints(buffer);
+    }
   }
-  return result;
+}
+void CollectHulls(std::vector<Point> &local_hull, int rank, int size, OutType &output) {
+  std::vector<Point> global_hull;
+  if (rank == 0) {
+    global_hull = std::move(local_hull);
+    for (int i = 1; i < size; ++i) {
+      int recv_count = 0;
+      MPI_Recv(&recv_count, 1, MPI_INT, i, kTagHullSize, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+      if (recv_count > 0) {
+        std::vector<double> buffer(static_cast<std::size_t>(recv_count) * kPointDataSize);
+        MPI_Recv(buffer.data(), static_cast<int>(buffer.size()), MPI_DOUBLE, i, kTagHullData, MPI_COMM_WORLD,
+                 MPI_STATUS_IGNORE);
+        auto recv_points = UnpackPoints(buffer);
+        global_hull.insert(global_hull.end(), recv_points.begin(), recv_points.end());
+      }
+    }
+    if (!global_hull.empty()) {
+      global_hull = GrahamScan(global_hull);
+    }
+    output = static_cast<OutType>(global_hull.size());
+  } else {
+    int local_hull_size = static_cast<int>(local_hull.size());
+    MPI_Send(&local_hull_size, 1, MPI_INT, 0, kTagHullSize, MPI_COMM_WORLD);
+    if (local_hull_size > 0) {
+      std::vector<double> buffer;
+      PackPoints(local_hull, buffer);
+      MPI_Send(buffer.data(), static_cast<int>(buffer.size()), MPI_DOUBLE, 0, kTagHullData, MPI_COMM_WORLD);
+    }
+  }
 }
 }  // namespace
 LuschnikovEGrahamCovHallConstrMPI::LuschnikovEGrahamCovHallConstrMPI(const InType &in) {
@@ -119,81 +215,12 @@ bool LuschnikovEGrahamCovHallConstrMPI::RunImpl() {
   MPI_Comm_size(MPI_COMM_WORLD, &size);
   std::vector<Point> all_points;
   if (rank == 0) {
-    all_points.reserve(static_cast<std::size_t>(input));
-    for (InType i = 0; i < input; ++i) {
-      double angle = (2.0 * kPi * static_cast<double>(i)) / static_cast<double>(input);
-      all_points.emplace_back(std::cos(angle), std::sin(angle), static_cast<int>(i));
-    }
+    all_points = GenerateCirclePoints(input);
   }
-  int points_per_proc = static_cast<int>(input) / size;
-  int remainder = static_cast<int>(input) % size;
-  std::vector<int> send_counts(static_cast<std::size_t>(size), 0);
-  std::vector<int> displs(static_cast<std::size_t>(size), 0);
-  for (int i = 0; i < size; ++i) {
-    send_counts[static_cast<std::size_t>(i)] = (i < remainder) ? (points_per_proc + 1) : points_per_proc;
-    if (i > 0) {
-      displs[static_cast<std::size_t>(i)] =
-          displs[static_cast<std::size_t>(i - 1)] + send_counts[static_cast<std::size_t>(i - 1)];
-    }
-  }
-  int local_count = send_counts[static_cast<std::size_t>(rank)];
   std::vector<Point> local_points;
-  local_points.reserve(static_cast<std::size_t>(local_count));
-  if (rank == 0) {
-    for (int i = 0; i < local_count; ++i) {
-      local_points.push_back(all_points[static_cast<std::size_t>(i)]);
-    }
-    for (int i = 1; i < size; ++i) {
-      int start_idx = displs[static_cast<std::size_t>(i)];
-      int count = send_counts[static_cast<std::size_t>(i)];
-      MPI_Send(&count, 1, MPI_INT, i, 0, MPI_COMM_WORLD);
-      if (count > 0) {
-        std::vector<double> buffer;
-        std::vector<Point> temp_points;
-        temp_points.reserve(static_cast<std::size_t>(count));
-        for (int j = 0; j < count; ++j) {
-          temp_points.push_back(all_points[static_cast<std::size_t>(start_idx + j)]);
-        }
-        PackPoints(temp_points, buffer);
-        MPI_Send(buffer.data(), static_cast<int>(buffer.size()), MPI_DOUBLE, i, 1, MPI_COMM_WORLD);
-      }
-    }
-  } else {
-    int recv_count = 0;
-    MPI_Recv(&recv_count, 1, MPI_INT, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-    if (recv_count > 0) {
-      std::vector<double> buffer(static_cast<std::size_t>(recv_count) * kPointDataSize);
-      MPI_Recv(buffer.data(), static_cast<int>(buffer.size()), MPI_DOUBLE, 0, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-      local_points = UnpackPoints(buffer);
-    }
-  }
+  DistributePoints(all_points, rank, size, input, local_points);
   auto local_hull = GrahamScan(local_points);
-  std::vector<Point> global_hull;
-  if (rank == 0) {
-    global_hull = std::move(local_hull);
-    for (int i = 1; i < size; ++i) {
-      int recv_count = 0;
-      MPI_Recv(&recv_count, 1, MPI_INT, i, 2, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-      if (recv_count > 0) {
-        std::vector<double> buffer(static_cast<std::size_t>(recv_count) * kPointDataSize);
-        MPI_Recv(buffer.data(), static_cast<int>(buffer.size()), MPI_DOUBLE, i, 3, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-        auto recv_points = UnpackPoints(buffer);
-        global_hull.insert(global_hull.end(), recv_points.begin(), recv_points.end());
-      }
-    }
-    if (!global_hull.empty()) {
-      global_hull = GrahamScan(global_hull);
-    }
-    GetOutput() = static_cast<OutType>(global_hull.size());
-  } else {
-    int local_hull_size = static_cast<int>(local_hull.size());
-    MPI_Send(&local_hull_size, 1, MPI_INT, 0, 2, MPI_COMM_WORLD);
-    if (local_hull_size > 0) {
-      std::vector<double> buffer;
-      PackPoints(local_hull, buffer);
-      MPI_Send(buffer.data(), static_cast<int>(buffer.size()), MPI_DOUBLE, 0, 3, MPI_COMM_WORLD);
-    }
-  }
+  CollectHulls(local_hull, rank, size, GetOutput());
   MPI_Barrier(MPI_COMM_WORLD);
   return GetOutput() > 0;
 }

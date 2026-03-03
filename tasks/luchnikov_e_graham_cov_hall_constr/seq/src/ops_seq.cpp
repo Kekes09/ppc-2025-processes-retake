@@ -12,7 +12,9 @@
 namespace luchnikov_e_graham_cov_hall_constr {
 namespace {
 constexpr double kPi = 3.14159265358979323846;
+constexpr double kTwoPi = 2.0 * kPi;
 constexpr double kEpsilon = 1e-10;
+constexpr std::size_t kMinHullPoints = 3;
 struct Point {
   double x;
   double y;
@@ -27,6 +29,52 @@ double DistanceSquared(const Point &a, const Point &b) {
   double dx = a.x - b.x;
   double dy = a.y - b.y;
   return dx * dx + dy * dy;
+}
+bool ComparePointsByYThenX(const Point &p1, const Point &p2) {
+  if (p1.y != p2.y) {
+    return p1.y < p2.y;
+  }
+  return p1.x < p2.x;
+}
+bool CompareByPolarAngle(const Point &start, const Point &a, const Point &b) {
+  double cross = CrossProduct(start, a, b);
+  if (std::abs(cross) < kEpsilon) {
+    return DistanceSquared(start, a) < DistanceSquared(start, b);
+  }
+  return cross > 0;
+}
+std::size_t BuildConvexHull(std::vector<Point> &points) {
+  if (points.size() < kMinHullPoints) {
+    return points.size();
+  }
+  auto bottom_left = std::min_element(points.begin(), points.end(), ComparePointsByYThenX);
+  std::swap(points[0], *bottom_left);
+  Point start = points[0];
+  std::sort(points.begin() + 1, points.end(),
+            [&start](const Point &a, const Point &b) { return CompareByPolarAngle(start, a, b); });
+  std::stack<Point> hull_stack;
+  hull_stack.push(points[0]);
+  hull_stack.push(points[1]);
+  for (std::size_t i = kMinHullPoints - 1; i < points.size(); ++i) {
+    Point top = hull_stack.top();
+    hull_stack.pop();
+    while (!hull_stack.empty() && CrossProduct(hull_stack.top(), top, points[i]) <= 0) {
+      top = hull_stack.top();
+      hull_stack.pop();
+    }
+    hull_stack.push(top);
+    hull_stack.push(points[i]);
+  }
+  return hull_stack.size();
+}
+std::vector<Point> GenerateCirclePoints(InType count) {
+  std::vector<Point> points;
+  points.reserve(static_cast<std::size_t>(count));
+  for (InType i = 0; i < count; ++i) {
+    double angle = (kTwoPi * static_cast<double>(i)) / static_cast<double>(count);
+    points.emplace_back(std::cos(angle), std::sin(angle), static_cast<int>(i));
+  }
+  return points;
 }
 }  // namespace
 LuschnikovEGrahamCovHallConstrSEQ::LuschnikovEGrahamCovHallConstrSEQ(const InType &in) {
@@ -46,45 +94,8 @@ bool LuschnikovEGrahamCovHallConstrSEQ::RunImpl() {
   if (input <= 0) {
     return false;
   }
-  std::vector<Point> points;
-  points.reserve(static_cast<std::size_t>(input));
-  for (InType i = 0; i < input; ++i) {
-    double angle = (2.0 * kPi * static_cast<double>(i)) / static_cast<double>(input);
-    points.emplace_back(std::cos(angle), std::sin(angle), static_cast<int>(i));
-  }
-  if (points.size() < 3) {
-    GetOutput() = static_cast<OutType>(points.size());
-    return true;
-  }
-  auto bottom_left = std::min_element(points.begin(), points.end(), [](const Point &p1, const Point &p2) {
-    if (p1.y != p2.y) {
-      return p1.y < p2.y;
-    }
-    return p1.x < p2.x;
-  });
-  std::swap(points[0], *bottom_left);
-  Point start = points[0];
-  std::sort(points.begin() + 1, points.end(), [&start](const Point &a, const Point &b) {
-    double cross = CrossProduct(start, a, b);
-    if (std::abs(cross) < kEpsilon) {
-      return DistanceSquared(start, a) < DistanceSquared(start, b);
-    }
-    return cross > 0;
-  });
-  std::stack<Point> hull_stack;
-  hull_stack.push(points[0]);
-  hull_stack.push(points[1]);
-  for (std::size_t i = 2; i < points.size(); ++i) {
-    Point top = hull_stack.top();
-    hull_stack.pop();
-    while (!hull_stack.empty() && CrossProduct(hull_stack.top(), top, points[i]) <= 0) {
-      top = hull_stack.top();
-      hull_stack.pop();
-    }
-    hull_stack.push(top);
-    hull_stack.push(points[i]);
-  }
-  GetOutput() = static_cast<OutType>(hull_stack.size());
+  std::vector<Point> points = GenerateCirclePoints(input);
+  GetOutput() = static_cast<OutType>(BuildConvexHull(points));
   return GetOutput() > 0;
 }
 bool LuschnikovEGrahamCovHallConstrSEQ::PostProcessingImpl() {
