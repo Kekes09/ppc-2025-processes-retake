@@ -12,7 +12,7 @@ class LuschnikovEGrahamCovHallConstrPerfTestProcesses : public ppc::util::BaseRu
     input_data_ = kCount_;
   }
   bool CheckTestOutputData(OutType &output_data) final {
-    return output_data == 0;
+    return input_data_ == output_data;
   }
   InType GetTestInputData() final {
     return input_data_;
