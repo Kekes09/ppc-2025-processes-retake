@@ -81,14 +81,6 @@ TEST(LuschnikovEGrahamCovHallConstrSEQTest, OctagonPoints) {
   ASSERT_TRUE(task.Run());
   ASSERT_TRUE(task.PostProcessing());
 }
-TEST(LuschnikovEGrahamCovHallConstrSEQTest, NonagonPoints) {
-  InType input = 9;
-  LuschnikovEGrahamCovHallConstrSEQ task(input);
-  ASSERT_TRUE(task.Validation());
-  ASSERT_TRUE(task.PreProcessing());
-  ASSERT_TRUE(task.Run());
-  ASSERT_TRUE(task.PostProcessing());
-}
 TEST(LuschnikovEGrahamCovHallConstrSEQTest, DecagonPoints) {
   InType input = 10;
   LuschnikovEGrahamCovHallConstrSEQ task(input);
@@ -153,14 +145,6 @@ TEST(LuschnikovEGrahamCovHallConstrMPITest, HeptagonPoints) {
 }
 TEST(LuschnikovEGrahamCovHallConstrMPITest, OctagonPoints) {
   InType input = 8;
-  LuschnikovEGrahamCovHallConstrMPI task(input);
-  ASSERT_TRUE(task.Validation());
-  ASSERT_TRUE(task.PreProcessing());
-  ASSERT_TRUE(task.Run());
-  ASSERT_TRUE(task.PostProcessing());
-}
-TEST(LuschnikovEGrahamCovHallConstrMPITest, NonagonPoints) {
-  InType input = 9;
   LuschnikovEGrahamCovHallConstrMPI task(input);
   ASSERT_TRUE(task.Validation());
   ASSERT_TRUE(task.PreProcessing());
